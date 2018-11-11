@@ -5,3 +5,7 @@ html {
 body {
   background-color: #212529;
 }
+
+.table-row {
+  cursor: pointer;
+}

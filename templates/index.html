@@ -36,7 +36,7 @@
                       </thead>
                       <tbody>
                           {% for item in queue %}
-                        <tr>
+                          <tr class="table-row" data-href ="{{ item[0]['external_urls']['spotify'] }}">
                             <th scope="row">{{ loop.index }}</th>
                             <td>{{ item[0]['name'] }}</td>
                             <td>{{ item[0]['artist'] }}</td>
@@ -79,5 +79,6 @@
     <script
         src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}">
     </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
   </body>
 </html>
