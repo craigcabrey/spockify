@@ -29,7 +29,7 @@ def post_index():
     track = sp.track(uri)
     duration = float(track['duration_ms']) / 1000
 
-    queue.put_nowait((uri, duration - 2))
+    queue.put_nowait((track['uri'], duration - 2))
 
     print(f'current queue size: {queue.unfinished_tasks}')
 
