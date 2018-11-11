@@ -1,11 +1,75 @@
-<html>
-    <head>
-        <title>Spockify</title>
-    <head>
-    <body>
-        <form method="post">
-            <input name="spotify_uri" placeholder="spotify uri" type="text" />
-            <button type="submit">Submit</button>
-        </form>
-    </body>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Spockify</title>
+
+    <link href="{{ url_for('static', filename='css/bootstrap.css') }}"
+          rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap-grid.css') }}"
+          rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/app.css') }}" rel="stylesheet">
+  </head>
+
+  <body>
+    <div class="container-fluid h-100">
+        <div class="row mt-5">
+            <div class="col-4 offset-4 col-md-2 offset-md-5">
+                <img src="{{ url_for('static', filename='img/cat.png') }}" class="img-fluid">
+            </div>
+        </div>
+		<div class="row h-25 align-items-center">
+			<div class="col-sm-12 col-md-8 offset-md-2">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-borderless">
+                      <thead>
+                        <tr>
+                          <th scope="col">#</th>
+                          <th scope="col">Title</th>
+                          <th scope="col">Artist</th>
+                          <th scope="col">Duration</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                          {% for item in queue %}
+                        <tr>
+                            <th scope="row">{{ loop.index }}</th>
+                            <td>{{ item[0]['name'] }}</td>
+                            <td>{{ item[0]['artist'] }}</td>
+                            <td>{{ item[0]['duration'] }}</td>
+                        </tr>
+                          {% else %}
+                        <tr>
+                            <th colspan="4">Nothing in the queue :(</th>
+                        </tr>
+                          {% endfor %}
+                      </tbody>
+                    </table>
+					<form method="post">
+                        <div class="input-group">
+                            <input name="spotify_uri"
+                                   type="text"
+                                   class="form-control"
+                                   placeholder="Track Identifier, URI, or URL">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-success">
+                                    Queue
+                                </button>
+                            </div>
+                        </div>
+				    </form>
+                </div>
+			</div>
+		</div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+            crossorigin="anonymous"></script>
+    <script
+        src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}">
+    </script>
+  </body>
 </html>

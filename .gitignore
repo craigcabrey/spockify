@@ -1,3 +1,4 @@
 envs
 __pycache__
 .cache*
+.DS_Store

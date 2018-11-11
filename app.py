@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import datetime
 import queue
 import sys
 import time
@@ -21,15 +22,25 @@ sp = None
 
 @app.route('/', methods=['GET'])
 def get_index():
-    return flask.render_template('index.html')
+    return flask.render_template('index.html', queue=queue.queue)
 
 @app.route('/', methods=['POST'])
 def post_index():
     uri = flask.request.form.get('spotify_uri')
     track = sp.track(uri)
+
+    track['artist'] = ', '.join(artist['name'] for artist in track['artists'])
+
+    duration = datetime.timedelta(milliseconds=track['duration_ms'])
+
+    track['duration'] = '{:02d}:{:02d}'.format(
+        (duration.seconds % 3600) // 60,
+        duration.seconds % 60,
+    )
+
     duration = float(track['duration_ms']) / 1000
 
-    queue.put_nowait((track['uri'], duration - 2))
+    queue.put_nowait((track, duration - 2))
 
     print(f'current queue size: {queue.unfinished_tasks}')
 
@@ -43,10 +54,10 @@ def debug():
 
 def process_queue():
     while not exiting:
-        uri, duration = queue.get()
+        track, duration = queue.get()
 
-        print(f'retrieved {uri} from queue, starting playback')
-        sp.start_playback(uris=[uri])
+        print(f'retrieved {track["uri"]} from queue, starting playback')
+        sp.start_playback(uris=[track['uri']])
 
         print(f'sleeping for {duration}')
         time.sleep(duration)
