@@ -53,7 +53,7 @@
                         <div class="input-group">
                             <input name="spotify_uri"
                                    type="text"
-                                   class="form-control"
+                                   class="form-control {{'is-invalid' if errors}}"
                                    placeholder="Track Identifier, URI, or URL">
                             <div class="input-group-append">
                                 <button type="submit" class="btn btn-success">
@@ -61,6 +61,14 @@
                                 </button>
                             </div>
                         </div>
+                        {% if errors %}
+                        <span class="invalid-feedback d-block">
+                            Error:
+                            {% for error in errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </span>
+                        {% endif %}
 				    </form>
                 </div>
 			</div>

@@ -11,7 +11,7 @@ import flask
 import spotipy
 import spotipy.util
 
-app = flask.Flask(__name__)
+app = flask.Flask('spockify')
 
 queue = queue.Queue()
 
@@ -22,29 +22,36 @@ sp = None
 
 @app.route('/', methods=['GET'])
 def get_index():
-    return flask.render_template('index.html', queue=queue.queue)
+    return flask.render_template('index.html', queue=queue.queue, errors=[])
 
 @app.route('/', methods=['POST'])
 def post_index():
+    errors = []
+
     uri = flask.request.form.get('spotify_uri')
-    track = sp.track(uri)
 
-    track['artist'] = ', '.join(artist['name'] for artist in track['artists'])
+    try:
+        track = sp.track(uri)
+    except spotipy.client.SpotifyException as e:
+        app.logger.error(f'received error from spotify: {str(e)}')
+        errors.append(str(e))
+    else:
+        track['artist'] = ', '.join(artist['name'] for artist in track['artists'])
 
-    duration = datetime.timedelta(milliseconds=track['duration_ms'])
+        duration = datetime.timedelta(milliseconds=track['duration_ms'])
 
-    track['duration'] = '{:02d}:{:02d}'.format(
-        (duration.seconds % 3600) // 60,
-        duration.seconds % 60,
-    )
+        track['duration'] = '{:02d}:{:02d}'.format(
+            (duration.seconds % 3600) // 60,
+            duration.seconds % 60,
+        )
 
-    duration = float(track['duration_ms']) / 1000
+        duration = float(track['duration_ms']) / 1000
 
-    queue.put_nowait((track, duration - 2))
+        queue.put_nowait((track, duration - 2))
 
-    print(f'current queue size: {queue.unfinished_tasks}')
+        app.logger.debug(f'current queue size: {queue.unfinished_tasks}')
 
-    return flask.redirect('/')
+    return flask.render_template('index.html', queue=queue.queue, errors=errors)
 
 @app.route('/debug')
 def debug():
@@ -56,14 +63,14 @@ def process_queue():
     while not exiting:
         track, duration = queue.get()
 
-        print(f'retrieved {track["uri"]} from queue, starting playback')
+        app.logger.debug(f'retrieved {track["uri"]} from queue, starting playback')
         sp.start_playback(uris=[track['uri']])
 
-        print(f'sleeping for {duration}')
+        app.logger.debug(f'sleeping for {duration}')
         time.sleep(duration)
         queue.task_done()
 
-        print(f'current queue size: {queue.unfinished_tasks}')
+        app.logger.debug(f'current queue size: {queue.unfinished_tasks}')
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -71,6 +78,7 @@ def parse_args():
     parser.add_argument('username')
     parser.add_argument('--host', default='0.0.0.0')
     parser.add_argument('--port', default=5000)
+    parser.add_argument('--debug', action='store_true')
 
     return parser.parse_args()
 
@@ -91,7 +99,7 @@ def main():
     process_queue_thread.start()
 
     try:
-        app.run(host=args.host, port=args.port)
+        app.run(host=args.host, port=args.port, debug=args.debug)
     except KeyboardInterrupt:
         exiting = True
 
