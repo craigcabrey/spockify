@@ -22,6 +22,20 @@
                 <img src="{{ url_for('static', filename='img/cat.png') }}" class="img-fluid">
             </div>
         </div>
+
+        {% if now_playing %}
+        <div class="row mt-5 align-items-center">
+            <div class="col-1 offset-md-2">
+                <img src="{{ now_playing['album_art_url'] }}"
+                     class="rounded img-thumbnail image-fluid float-left">
+            </div>
+            <div class="col-9">
+                <h3>{{ now_playing['item']['name'] }}</h3>
+                <small class="text-muted">{{ now_playing['artist'] }}</small>
+            </div>
+        </div>
+        {% endif %}
+
 		<div class="row mt-5 mb-5 align-items-center">
 			<div class="col-sm-12 col-md-8 offset-md-2">
                 <div class="table-responsive">

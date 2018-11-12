@@ -23,9 +23,43 @@ exiting = False
 sp = None
 
 
+class Track:
+
+    @classmethod
+    def from_id(cls, id):
+        return cls(sp.track(id))
+
+    def __init__(self, metadata):
+        self._metadata = metadata
+
+    @property
+    def human_duration(self):
+        duration = datetime.timedelta(milliseconds=self._metadata['duration_ms'])
+
+        return '{:02d}:{:02d}'.format(
+            (duration.seconds % 3600) // 60,
+            duration.seconds % 60,
+        )
+
+
 @app.route('/', methods=['GET'])
 def get_index():
-    return flask.render_template('index.html', queue=queue.queue, errors=[])
+    now_playing_track = sp.current_playback()
+
+    now_playing_track['artist'] = ', '.join(
+        artist['name'] for artist in now_playing_track['item']['artists']
+    )
+
+    for image in now_playing_track['item']['album']['images']:
+        if image['height'] == 300:
+            now_playing_track['album_art_url'] = image['url']
+
+    return flask.render_template(
+        'index.html',
+        now_playing=now_playing_track,
+        queue=queue.queue,
+        errors=[],
+    )
 
 def handle_playlist_uri(uri):
     for item in sp.user_playlist(user=None, playlist_id=uri)['tracks']['items']:
@@ -41,6 +75,10 @@ def post_index():
     uri = flask.request.form.get('spotify_uri')
 
     *_, uri_type, _ = uri.split(':')
+
+    if 'http' in uri_type:
+        # given a url, so split by '/'
+        *_, uri_type, _ = uri.split('/')
 
     try:
         tracks = globals()[f'handle_{uri_type}_uri'](uri)
@@ -111,11 +149,17 @@ def main():
     if not os.path.exists(os.path.dirname(cache_path)):
         os.makedirs(os.path.dirname(cache_path))
 
+    scopes = [
+        'user-read-playback-state',
+        'playlist-read-collaborative',
+        'user-modify-playback-state',
+    ]
+
     oauth_manager = spotipy.oauth2.SpotifyOAuth(
         client_id=args.client_id,
         client_secret=args.client_secret,
         redirect_uri=args.redirect_uri,
-        scope='playlist-read-collaborative user-modify-playback-state',
+        scope=' '.join(scopes),
         cache_path=cache_path,
     )
 
