@@ -95,6 +95,9 @@ def main():
 
     cache_path = os.path.expanduser('~/.config/spockify/token')
 
+    if not os.path.exists(os.path.dirname(cache_path)):
+        os.makedirs(os.path.dirname(cache_path))
+
     oauth_manager = spotipy.oauth2.SpotifyOAuth(
         client_id=args.client_id,
         client_secret=args.client_secret,
