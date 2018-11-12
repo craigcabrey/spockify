@@ -12,11 +12,11 @@ We also make use of `flask` and `spotipy` to make all the glue coding easier (th
 
 Register a Spotify application under your account. See Spotify's guide [here](https://developer.spotify.com/documentation/general/guides/authorization-guide/). Note that this may end up being out of date at some point.
 
-You'll need to set the environment variables that `spotipy` uses:
+You'll need to set the environment variables that `spotipy` uses (or alternatively just use the equivalent command line arguments, see `--help` for more):
 
-* `SPOTIPY_CLIENT_ID`
-* `SPOTIPY_CLIENT_SECRET`
-* `SPOTIPY_CLIENT_REDIRECT_URI`
+* `SPOCKIFY_CLIENT_ID`
+* `SPOCKIFY_CLIENT_SECRET`
+* `SPOCKIFY_REDIRECT_URI`
 
 The first two are self explanatory (hopefully), and the second can just be set to `http://localhost/` -- though note that you need to authorize this redirect uri in the settings of your registered Spotify application.
 
