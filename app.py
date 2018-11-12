@@ -27,30 +27,40 @@ sp = None
 def get_index():
     return flask.render_template('index.html', queue=queue.queue, errors=[])
 
+def handle_playlist_uri(uri):
+    for item in sp.user_playlist(user=None, playlist_id=uri)['tracks']['items']:
+        yield item['track']
+
+def handle_track_uri(uri):
+    yield sp.track(uri)
+
 @app.route('/', methods=['POST'])
 def post_index():
     errors = []
 
     uri = flask.request.form.get('spotify_uri')
 
+    *_, uri_type, _ = uri.split(':')
+
     try:
-        track = sp.track(uri)
+        tracks = globals()[f'handle_{uri_type}_uri'](uri)
     except spotipy.client.SpotifyException as e:
         app.logger.error(f'received error from spotify: {str(e)}')
         errors.append(str(e))
     else:
-        track['artist'] = ', '.join(artist['name'] for artist in track['artists'])
+        for track in tracks:
+            track['artist'] = ', '.join(artist['name'] for artist in track['artists'])
 
-        duration = datetime.timedelta(milliseconds=track['duration_ms'])
+            duration = datetime.timedelta(milliseconds=track['duration_ms'])
 
-        track['duration'] = '{:02d}:{:02d}'.format(
-            (duration.seconds % 3600) // 60,
-            duration.seconds % 60,
-        )
+            track['duration'] = '{:02d}:{:02d}'.format(
+                (duration.seconds % 3600) // 60,
+                duration.seconds % 60,
+            )
 
-        duration = float(track['duration_ms']) / 1000
+            duration = float(track['duration_ms']) / 1000
 
-        queue.put_nowait((track, duration - 2))
+            queue.put_nowait((track, duration - 2))
 
         app.logger.debug(f'current queue size: {queue.unfinished_tasks}')
 
@@ -102,7 +112,7 @@ def main():
         client_id=args.client_id,
         client_secret=args.client_secret,
         redirect_uri=args.redirect_uri,
-        scope='user-modify-playback-state',
+        scope='playlist-read-collaborative user-modify-playback-state',
         cache_path=cache_path,
     )
 
