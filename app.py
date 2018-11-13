@@ -64,7 +64,10 @@ def post_index():
 
         app.logger.debug(f'current queue size: {queue.unfinished_tasks}')
 
-    return flask.render_template('index.html', queue=queue.queue, errors=errors)
+    if errors:
+        return flask.render_template('index.html', queue=queue.queue, errors=errors)
+    else:
+        return flask.redirect(flask.url_for('get_index'))
 
 @app.route('/debug')
 def debug():
