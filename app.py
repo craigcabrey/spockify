@@ -46,13 +46,14 @@ class Track:
 def get_index():
     now_playing_track = sp.current_playback()
 
-    now_playing_track['artist'] = ', '.join(
-        artist['name'] for artist in now_playing_track['item']['artists']
-    )
+    if now_playing_track:
+        now_playing_track['artist'] = ', '.join(
+            artist['name'] for artist in now_playing_track['item']['artists']
+        )
 
-    for image in now_playing_track['item']['album']['images']:
-        if image['height'] == 300:
-            now_playing_track['album_art_url'] = image['url']
+        for image in now_playing_track['item']['album']['images']:
+            if image['height'] == 300:
+                now_playing_track['album_art_url'] = image['url']
 
     return flask.render_template(
         'index.html',
