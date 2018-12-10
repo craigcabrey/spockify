@@ -10,15 +10,15 @@ import time
 import threading
 
 import flask
+from flask_cors import CORS
 import spotipy
 import spotipy.oauth2
 import spotipy.util
 
 app = flask.Flask('spockify')
+CORS(app, resources=r'/api/.*', allow_headers='Content-Type')
 
 queue = queue.Queue()
-
-
 exiting = False
 sp = None
 
@@ -40,6 +40,70 @@ class Track:
             (duration.seconds % 3600) // 60,
             duration.seconds % 60,
         )
+
+@app.route('/api/', methods=['GET'])
+def api_get_index():
+    errors = []
+    now_playing_track = sp.current_playback()
+
+    if now_playing_track:
+        now_playing_track['artist'] = ', '.join(
+            artist['name'] for artist in now_playing_track['item']['artists']
+        )
+
+        for image in now_playing_track['item']['album']['images']:
+            if image['height'] == 300:
+                now_playing_track['album_art_url'] = image['url']
+    ret = {
+        'now_playing': now_playing_track,
+        'queue': list(queue.queue),
+        'errors': errors,
+    }
+    return flask.jsonify(ret)
+
+@app.route('/api/', methods=['POST'])
+def api_post_index():
+    errors = []
+    uri = flask.request.get_json()
+    print(uri)
+    uri = uri['spotify_uri']
+
+    *_, uri_type, _ = uri.split(':')
+
+    if 'http' in uri_type:
+        # given a url, so split by '/'
+        *_, uri_type, _ = uri.split('/')
+
+    try:
+        tracks = globals()[f'handle_{uri_type}_uri'](uri)
+    except spotipy.client.SpotifyException as e:
+        app.logger.error(f'received error from spotify: {str(e)}')
+        errors.append(str(e))
+    else:
+        for track in tracks:
+            track['artist'] = ', '.join(artist['name'] for artist in track['artists'])
+
+            duration = datetime.timedelta(milliseconds=track['duration_ms'])
+
+            track['duration'] = '{:02d}:{:02d}'.format(
+                (duration.seconds % 3600) // 60,
+                duration.seconds % 60,
+            )
+
+            duration = float(track['duration_ms']) / 1000
+
+            queue.put_nowait((track, duration - 2))
+
+        app.logger.debug(f'current queue size: {queue.unfinished_tasks}')
+    ret = {}
+    if errors:
+        ret ['success'] = 0
+        ret['errors'] = errors
+    else:
+        ret ['success'] = 1
+        ret['queue'] = list(queue.queue)
+    
+    return flask.jsonify(ret)
 
 
 @app.route('/', methods=['GET'])
