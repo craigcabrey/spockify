@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 class NowPlaying extends Component {
 	render () { 
-		if(this.props.now_playing) {
+		if (this.props.now_playing) {
 			return (
 				<div className="row mt-5 align-items-center">
 	            <div className="col-1 offset-md-2">
