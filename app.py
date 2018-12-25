@@ -16,7 +16,6 @@ import spotipy.oauth2
 import spotipy.util
 
 app = flask.Flask('spockify')
-CORS(app, resources=r'/api/.*', allow_headers='Content-Type')
 
 queue = queue.Queue()
 exiting = False
@@ -258,6 +257,8 @@ def main():
     process_queue_thread = threading.Thread(target=process_queue)
     process_queue_thread.start()
 
+    if args.debug:
+        CORS(app, resources=r'/api/.*', allow_headers='Content-Type')
     try:
         app.run(host=args.host, port=args.port, debug=args.debug)
     except KeyboardInterrupt:

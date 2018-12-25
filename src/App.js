@@ -13,14 +13,13 @@ import './css/app.css';
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {errors: [], now_playing: null, queue: null, inputValue: 'spotify:track:0ROCe58wXm7sBUPkZaRrnY'};
+    this.state = {errors: [], now_playing: null, queue: null, inputValue: ''};
   }
   componentDidMount() {
     this.state = {now_playing: null, queue: null};
     fetch("http://127.0.0.1:5000/api/")
     .then(res => {return res.json()})
     .then( res => {
-      console.log(res);
       this.setState({now_playing: res.now_playing, queue: res.queue});
     });
   }
@@ -48,6 +47,15 @@ class App extends Component {
   }
 
   render() {
+    var errors = (<span> </span>);
+    if (this.state.errors.length > 0){
+      errors = (
+        <span className="invalid-feedback d-block">
+          Errors : {this.state.errors.map(error => {
+            return error;
+          })}
+        </span>);
+    }
     return (
       <div className="container-fluid h-100">
         <div className="row mt-5">
@@ -63,6 +71,7 @@ class App extends Component {
         <div className="table-responsive">
           <PlayQueue queue={this.state.queue} deleteTrack={this.deleteTrack}/>
           <div className="input-group">
+              {errors}
               <input name="spotify_uri"
                      type="text"
                      className="form-control"
@@ -74,19 +83,6 @@ class App extends Component {
                   </button>
               </div>
           </div>
-          {
-            this.state.errors.length > 0 
-            ? (
-              <span className="invalid-feedback d-block">
-                  Errors : {this.state.errors.map(error => {
-                    return error;
-                  })}
-              </span>
-              )
-            :
-            null
-          }
-          
         </div>
       </div>
     </div>
